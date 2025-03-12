@@ -9,7 +9,7 @@ from flask import Flask, make_response
 from flask_migrate import Migrate
 
 # db is a variable containing an instance of the SQLAlchemy class (Flask SQLAlchemy extension)
-from models import db
+from models import db, Hotel
 
 app = Flask(__name__)
 
@@ -25,5 +25,27 @@ migrate = Migrate(app, db)
 # initialize the Flask application to use the database
 db.init_app(app)
 
+# Deliverable #3 solution code
+@app.route('/hotels')
+def get_hotels():
+    hotels = Hotel.query.all()
+    response_body = [hotel.to_dict(only=('id', 'name')) for hotel in hotels]
+    return make_response(response_body, 200)
+    ipdb.set_trace()
+
+# Deliverable #4 solution code
+@app.route('/hotels/<int:id>')
+def hotel_by_id(id):
+    hotel = db.session.get(Hotel, id)
+
+    if hotel:
+        response_body = hotel.to_dict()
+        return make_response(response_body, 200)
+    else:
+        response_body = {
+            "error": "Hotel Not Found!"
+        }
+        return make_response(response_body, 404)
+
 if __name__ == "__main__":
-    app.run(port=7777, debug=True)
+    app.run(port=8000, debug=True)
