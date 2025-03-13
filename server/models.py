@@ -18,9 +18,26 @@ class Hotel(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
 
+    reviews = db.relationship('Review', back_populates='hotel' cascade='all')
+
 class Customer(db.Model, SerializerMixin):
     __tablename__ = 'customers'
 
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String)
     last_name = db.Column(db.String)
+
+    reviews = db.relationship('Review', back_populates='customer', cascade='all')
+
+class Review(db.Model, SerializerMixin):
+    __tablename__ = 'reviews'
+
+    id = db.Column(db.Integer, primary_key=True)
+    rating = db.Column(db.Integer)
+    text = db.Column(db.String)
+
+    hotel_id = db.Column(db.Integer, db.ForeignKey('hotels.id'))
+    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'))
+
+    hotel = db.relationship('Hotel', back_populates='reviews')
+    customer = db.relationship('Customer', back_populates='reviews')
