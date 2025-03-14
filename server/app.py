@@ -32,6 +32,7 @@ def hotel_by_id(id):
     hotel = db.session.get(Hotel, id)
 
     if hotel:
+        ipdb.set_trace()
         # This code should only be executed if the request method is "GET"
         response_body = hotel.to_dict(rules=('-reviews.hotel', '-reviews.customer'))
         response_body['customers'] = [customer.to_dict(only=('id', 'first_name', 'last_name')) for customer in hotel.customers]
