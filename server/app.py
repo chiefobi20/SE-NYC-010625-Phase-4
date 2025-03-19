@@ -36,15 +36,22 @@ class AllHotels(Resource):
         hotels = Hotel.query.all()
         response_body = [hotel.to_dict(only=('id', 'name')) for hotel in hotels]
         return make_response(response_body, 200)
-    
+
     def post(self):
         hotel_name = request.json.get('name')
         new_hotel = Hotel(name=hotel_name)
         db.session.add(new_hotel)
-        db.session.commit()
-        response_body = new_hotel.to_dict(rules=('-reviews',))
-        return make_response(response_body, 201)
-    
+        try:
+         db.session.commit()
+         response_body = new_hotel.to_dict(rules=('-reviews',))
+         return make_response(response_body, 201)
+
+        except:
+            response_body = {
+                "error": "Hotel name cannot be null!"
+            }
+            return make_response(response_body, 422)
+
 api.add_resource(AllHotels, '/hotels')
 
 class HotelByID(Resource):
@@ -58,13 +65,13 @@ class HotelByID(Resource):
             response_body['customers'] = [customer.to_dict(only=('id', 'first_name', 'last_name')) for customer in hotel.customers]
 
             return make_response(response_body, 200)
-        
+
         else:
             response_body = {
                 "error": "Hotel Not Found"
             }
             return make_response(response_body, 404)
-        
+
     def patch(self, id):
         hotel = db.session.get(Hotel, id)
 
@@ -80,7 +87,7 @@ class HotelByID(Resource):
                 "error": "Hotel Not Found"
             }
             return make_response(response_body, 404)
-        
+
     def delete(self, id):
         hotel = db.session.get(Hotel, id)
 
@@ -88,13 +95,13 @@ class HotelByID(Resource):
             db.session.delete(hotel)
             db.session.commit()
             return make_response({}, 204)
-        
+
         else:
             response_body = {
                 "error": "Hotel Not Found"
             }
             return make_response(response_body, 404)
-        
+
 api.add_resource(HotelByID, '/hotels/<int:id>')
 
 class AllCustomers(Resource):
@@ -111,7 +118,7 @@ class AllCustomers(Resource):
         db.session.commit()
         response_body = new_customer.to_dict(rules=('-reviews',))
         return make_response(response_body, 201)
-    
+
 api.add_resource(AllCustomers, '/customers')
 
 class CustomerByID(Resource):
@@ -123,15 +130,15 @@ class CustomerByID(Resource):
 
             # Add in the association proxy data (The customer's hotels)
             response_body['hotels'] = [hotel.to_dict(only=('id', 'name')) for hotel in customer.hotels]
-            
+
             return make_response(response_body, 200)
-        
+
         else:
             response_body = {
                 "error": "Customer Not Found"
             }
             return make_response(response_body, 404)
-        
+
     def patch(self, id):
         customer = db.session.get(Customer, id)
 
@@ -141,13 +148,13 @@ class CustomerByID(Resource):
             db.session.commit()
             response_body = customer.to_dict(rules=('-reviews',))
             return make_response(response_body, 200)
-        
+
         else:
             response_body = {
                 "error": "Customer Not Found"
             }
             return make_response(response_body, 404)
-        
+
     def delete(self, id):
         customer = db.session.get(Customer, id)
 
@@ -161,7 +168,7 @@ class CustomerByID(Resource):
                 "error": "Customer Not Found"
             }
             return make_response(response_body, 404)
-        
+
 api.add_resource(CustomerByID, '/customers/<int:id>')
 
 class AllReviews(Resource):
