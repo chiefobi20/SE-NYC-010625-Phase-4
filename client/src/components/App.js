@@ -11,11 +11,32 @@ function App(){
 
     function getHotels(){
         // GET request - Write the code to make a GET request to '/hotels' to retrieve all hotels and update the 'hotels' state with the hotel data.
+        fetch('http://127.0.0.1:7777/hotels')
+        .then(response => response.json())
+        .then(hotelsData => setHotels(hotelsData))
     }
 
     function addHotel(newHotel){
         // POST request - Write the code to make a POST request to '/hotels' to create a new hotel and update the 'hotels' state to add the new hotel to the state.
         // newHotel - contains an object with the new hotel data that should be used for the POST request.
+        fetch('http://127.0.0.1:7777/hotels', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(newHotel)
+        })
+        .then(response => {
+            if(response.ok){
+                response.json().then(newHotelData => setHotels([...hotels, newHotelData]))
+            }
+            else{
+                response.json().then(errorObject => {
+                    alert(`Error: ${errorObject}`)
+                })
+            }
+        })
     }
 
     function updateHotel(id, hotelDataForUpdate){
