@@ -26,6 +26,12 @@ class Hotel(db.Model, SerializerMixin):
     # hotels and users Many-to-Many relationship: The hotel's users
     users = association_proxy('reviews', 'user', creator = lambda u: Review(user = u))
 
+    @validates('name', 'image')
+    def validate_name_and_image(self, column_name, value):
+        if not type(value) == str:
+            raise TypeError(f"{column_name} must be a string")
+        elif len(value) < 5:
+            pass
 class User(db.Model, SerializerMixin):
     __tablename__ = 'users'
 
@@ -49,7 +55,7 @@ class User(db.Model, SerializerMixin):
         if (not isinstance(value, str)) or len(value) < 3:
             raise ValueError(f"{attr} must be a string that is at least 3 characters long!")
         return value
-    
+
     @validates('type')
     def validate_type(self, column, value):
         if value in ['customer', 'admin']:
@@ -79,7 +85,7 @@ class Review(db.Model, SerializerMixin):
             raise ValueError(f"{attr} must be an integer that is between 1 and 5!")
         else:
             return value
-        
+
     @validates('hotel_id', 'user_id')
     def validate_hotel_id_and_customer_id(self, attr, value):
         if not (isinstance(value, int)):
