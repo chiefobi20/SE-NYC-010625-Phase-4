@@ -7,8 +7,12 @@ from flask_restful import Api, Resource
 from flask_cors import CORS
 
 from models import db, Hotel, Customer, Review
+import os
 
 app = Flask(__name__)
+
+# Here's the secret key value that will be used for the session object
+app.secret_key = os.urandom(16)
 
 # configure a database connection to the local file examples.db
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hotels.db'
@@ -32,7 +36,7 @@ class AllHotels(Resource):
         hotels = Hotel.query.all()
         response_body = [hotel.to_dict(only=('id', 'name', 'image')) for hotel in hotels]
         return make_response(response_body, 200)
-    
+
     def post(self):
         try:
             new_hotel = Hotel(name=request.json.get('name'), image=request.json.get('image'))
@@ -45,7 +49,7 @@ class AllHotels(Resource):
                 "error": "Hotel must have a name and image, and the hotel name cannot be the same name as any other hotel!"
             }
             return make_response(response_body, 400)
-    
+
 api.add_resource(AllHotels, '/hotels')
 
 class HotelByID(Resource):
@@ -58,15 +62,15 @@ class HotelByID(Resource):
 
             # Add in the association proxy data (The hotel's customers)
             response_body['customers'] = [customer.to_dict(only=('id', 'first_name', 'last_name', 'username')) for customer in hotel.customers]
-            
+
             return make_response(response_body, 200)
-        
+
         else:
             response_body = {
                 'error': "Hotel Not Found"
             }
             return make_response(response_body, 404)
-        
+
     def patch(self, id):
             hotel = db.session.get(Hotel, id)
 
@@ -74,11 +78,11 @@ class HotelByID(Resource):
                 try:
                     for attr in request.json:
                         setattr(hotel, attr, request.json[attr])
-                    
-                    db.session.commit()    
+
+                    db.session.commit()
                     response_body = hotel.to_dict(only=('id', 'name', 'image'))
                     return make_response(response_body, 200)
-                
+
                 except:
                     response_body = {
                         "error": "Hotel must have a name and image, and the hotel name cannot be the same name as any other hotel!"
@@ -90,7 +94,7 @@ class HotelByID(Resource):
                     'error': "Hotel Not Found"
                 }
                 return make_response(response_body, 404)
-        
+
     def delete(self, id):
         hotel = db.session.get(Hotel, id)
 
@@ -99,13 +103,13 @@ class HotelByID(Resource):
             db.session.commit()
             response_body = {}
             return make_response(response_body, 204)
-        
+
         else:
             response_body = {
                 'error': "Hotel Not Found"
             }
             return make_response(response_body, 404)
-    
+
 api.add_resource(HotelByID, '/hotels/<int:id>')
 
 class AllCustomers(Resource):
@@ -114,7 +118,7 @@ class AllCustomers(Resource):
         customers = Customer.query.all()
         customer_list_with_dictionaries = [customer.to_dict(only=('id', 'first_name', 'last_name', 'username')) for customer in customers]
         return make_response(customer_list_with_dictionaries, 200)
-    
+
     def post(self):
         try:
             new_customer = Customer(first_name=request.json.get('first_name'), last_name=request.json.get('last_name'), username=request.json.get('username'))
@@ -127,7 +131,7 @@ class AllCustomers(Resource):
                 "error": "Customer's first name and last name cannot be the same, and first name and last name must be at least 3 characters long! Customer must have a username!"
             }
             return make_response(response_body, 400)
-    
+
 api.add_resource(AllCustomers, '/customers')
 
 class CustomerByID(Resource):
@@ -142,13 +146,13 @@ class CustomerByID(Resource):
             response_body['hotels'] = [hotel.to_dict(only=('id', 'name', 'image')) for hotel in customer.hotels]
 
             return make_response(response_body, 200)
-        
+
         else:
             response_body = {
                 'error': "Customer Not Found"
             }
             return make_response(response_body, 404)
-        
+
     def patch(self, id):
         customer = db.session.get(Customer, id)
 
@@ -156,7 +160,7 @@ class CustomerByID(Resource):
             try:
                 for attr in request.json:
                     setattr(customer, attr, request.json[attr])
-                
+
                 db.session.commit()
                 response_body = customer.to_dict(only=('id', 'first_name', 'last_name', 'username'))
                 return make_response(response_body, 200)
@@ -165,13 +169,13 @@ class CustomerByID(Resource):
                     "error": "Customer's first name and last name cannot be the same, and first name and last name must be at least 3 characters long! Customer must have a username!"
                 }
                 return make_response(response_body, 400)
-        
+
         else:
             response_body = {
                 'error': "Customer Not Found"
             }
             return make_response(response_body, 404)
-         
+
     def delete(self, id):
         customer = db.session.get(Customer, id)
 
@@ -180,7 +184,7 @@ class CustomerByID(Resource):
             db.session.commit()
             response_body = {}
             return make_response(response_body, 204)
-        
+
         else:
             response_body = {
                 'error': "Customer Not Found"
@@ -190,12 +194,12 @@ class CustomerByID(Resource):
 api.add_resource(CustomerByID, '/customers/<int:id>')
 
 class AllReviews(Resource):
-    
+
     def get(self):
         reviews = Review.query.all()
         review_list_with_dictionaries = [review.to_dict(rules=('-hotel.reviews', '-customer.reviews')) for review in reviews]
         return make_response(review_list_with_dictionaries, 200)
-    
+
     def post(self):
         try:
             new_review = Review(rating=request.json.get('rating'), text=request.json.get('text'), hotel_id=request.json.get('hotel_id'), customer_id=request.json.get('customer_id'))
@@ -209,7 +213,7 @@ class AllReviews(Resource):
                 "error": value_error_string
             }
             return make_response(response_body, 400)
-    
+
 api.add_resource(AllReviews, '/reviews')
 
 class ReviewByID(Resource):
@@ -220,13 +224,13 @@ class ReviewByID(Resource):
         if review:
             response_body = review.to_dict(rules=('-hotel.reviews', '-customer.reviews'))
             return make_response(response_body, 200)
-        
+
         else:
             response_body = {
                 "error": "Review Not Found"
             }
             return make_response(response_body, 404)
-        
+
     def patch(self, id):
         review = db.session.get(Review, id)
 
@@ -234,24 +238,24 @@ class ReviewByID(Resource):
             try:
                 for attr in request.json:
                     setattr(review, attr, request.json.get(attr))
-                
+
                 db.session.commit()
                 response_body = review.to_dict(rules=('-hotel.reviews', '-customer.reviews'))
                 return make_response(response_body, 200)
-            
+
             except ValueError as value_error:
                 value_error_string = str(value_error)
                 response_body = {
                     "error": value_error_string
                 }
                 return make_response(response_body, 400)
-        
+
         else:
             response_body = {
                 "error": "Review Not Found"
             }
             return make_response(response_body, 404)
-        
+
     def delete(self, id):
         review = db.session.get(Review, id)
 
@@ -260,7 +264,7 @@ class ReviewByID(Resource):
             db.session.commit()
             response_body = {}
             return make_response(response_body, 204)
-        
+
         else:
             response_body = {
                 "error": "Review Not Found"
